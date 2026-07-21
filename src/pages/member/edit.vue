@@ -1,93 +1,104 @@
 <template>
-  <view class="edit-page">
-    <view class="form-section">
-      <text class="form-title">基本信息</text>
-      <view class="form-item">
-        <text class="form-label">姓名 <text class="req">*</text></text>
-        <input v-model="form.name" placeholder="请输入姓名" class="form-input" />
+  <view class="page">
+    <view class="section-header">基本信息</view>
+    <view class="card group">
+      <view class="row">
+        <text class="row-label">姓名<text class="req">*</text></text>
+        <input v-model="form.name" placeholder="必填" placeholder-class="ph" class="row-input" />
       </view>
-      <view class="form-item">
-        <text class="form-label">性别</text>
+      <view class="row-separator" />
+      <view class="row">
+        <text class="row-label">性别</text>
         <picker :range="genderOptions" range-key="text" @change="onGenderChange">
-          <view class="form-picker">{{ genderText }}</view>
+          <view class="row-picker">{{ genderText }}</view>
         </picker>
       </view>
-      <view class="form-item">
-        <text class="form-label">世系</text>
-        <input v-model.number="form.generation" type="number" placeholder="第几世（数字）" class="form-input" />
+      <view class="row-separator" />
+      <view class="row">
+        <text class="row-label">世系</text>
+        <input v-model.number="form.generation" type="number" placeholder="第几世" placeholder-class="ph" class="row-input" />
       </view>
-      <view class="form-item">
-        <text class="form-label">字</text>
-        <input v-model="form.courtesyName" placeholder="字" class="form-input" />
+      <view class="row-separator" />
+      <view class="row">
+        <text class="row-label">字</text>
+        <input v-model="form.courtesyName" placeholder="选填" placeholder-class="ph" class="row-input" />
       </view>
-      <view class="form-item">
-        <text class="form-label">号</text>
-        <input v-model="form.alias" placeholder="号" class="form-input" />
-      </view>
-    </view>
-
-    <view class="form-section">
-      <text class="form-title">生卒籍贯</text>
-      <view class="form-item">
-        <text class="form-label">生年</text>
-        <input v-model="form.birthDate" placeholder="如 1980" class="form-input" />
-      </view>
-      <view class="form-item">
-        <text class="form-label">是否在世</text>
-        <switch :checked="form.isAlive" @change="onAliveChange" />
-      </view>
-      <view v-if="!form.isAlive" class="form-item">
-        <text class="form-label">卒年</text>
-        <input v-model="form.deathDate" placeholder="如 2050" class="form-input" />
-      </view>
-      <view class="form-item">
-        <text class="form-label">籍贯</text>
-        <input v-model="form.hometown" placeholder="籍贯" class="form-input" />
-      </view>
-      <view class="form-item">
-        <text class="form-label">功名/职业</text>
-        <input v-model="form.occupation" placeholder="功名/职业" class="form-input" />
+      <view class="row-separator" />
+      <view class="row">
+        <text class="row-label">号</text>
+        <input v-model="form.alias" placeholder="选填" placeholder-class="ph" class="row-input" />
       </view>
     </view>
 
-    <view class="form-section">
-      <text class="form-title">亲属关系</text>
-      <view class="form-item">
-        <text class="form-label">父亲</text>
+    <view class="section-header">生卒籍贯</view>
+    <view class="card group">
+      <view class="row">
+        <text class="row-label">生年</text>
+        <input v-model="form.birthDate" placeholder="如 1980" placeholder-class="ph" class="row-input" />
+      </view>
+      <view class="row-separator" />
+      <view class="row">
+        <text class="row-label">是否在世</text>
+        <switch :checked="form.isAlive" color="#007AFF" @change="onAliveChange" />
+      </view>
+      <view v-if="!form.isAlive" class="row-separator" />
+      <view v-if="!form.isAlive" class="row">
+        <text class="row-label">卒年</text>
+        <input v-model="form.deathDate" placeholder="如 2050" placeholder-class="ph" class="row-input" />
+      </view>
+      <view class="row-separator" />
+      <view class="row">
+        <text class="row-label">籍贯</text>
+        <input v-model="form.hometown" placeholder="选填" placeholder-class="ph" class="row-input" />
+      </view>
+      <view class="row-separator" />
+      <view class="row">
+        <text class="row-label">功名/职业</text>
+        <input v-model="form.occupation" placeholder="选填" placeholder-class="ph" class="row-input" />
+      </view>
+    </view>
+
+    <view class="section-header">亲属关系</view>
+    <view class="card group">
+      <view class="row">
+        <text class="row-label">父亲</text>
         <picker :range="fatherOptions" range-key="name" @change="onFatherChange">
-          <view class="form-picker">{{ fatherName || '请选择' }}</view>
+          <view class="row-picker">{{ fatherName || '选填' }}</view>
         </picker>
       </view>
-      <view class="form-item">
-        <text class="form-label">母亲</text>
+      <view class="row-separator" />
+      <view class="row">
+        <text class="row-label">母亲</text>
         <picker :range="motherOptions" range-key="name" @change="onMotherChange">
-          <view class="form-picker">{{ motherName || '请选择' }}</view>
+          <view class="row-picker">{{ motherName || '选填' }}</view>
         </picker>
       </view>
-      <view class="form-item">
-        <text class="form-label">配偶</text>
+      <view class="row-separator" />
+      <view class="row">
+        <text class="row-label">配偶</text>
         <picker :range="spouseOptions" range-key="name" @change="onSpouseChange">
-          <view class="form-picker">{{ spouseName || '请选择' }}</view>
+          <view class="row-picker">{{ spouseName || '选填' }}</view>
         </picker>
       </view>
     </view>
 
-    <view class="form-section">
-      <text class="form-title">简介传记</text>
-      <view class="form-item">
-        <text class="form-label">简介</text>
-        <textarea v-model="form.summary" placeholder="简要介绍" class="form-textarea" />
+    <view class="section-header">简介传记</view>
+    <view class="card group">
+      <view class="row block">
+        <text class="row-label">简介</text>
+        <textarea v-model="form.summary" placeholder="简要介绍" placeholder-class="ph" class="row-textarea" />
       </view>
-      <view class="form-item">
-        <text class="form-label">传记</text>
-        <textarea v-model="form.biography" placeholder="详细生平" class="form-textarea" />
+      <view class="row-separator" />
+      <view class="row block">
+        <text class="row-label">传记</text>
+        <textarea v-model="form.biography" placeholder="详细生平" placeholder-class="ph" class="row-textarea" />
       </view>
     </view>
 
     <view class="actions">
-      <button class="btn-save" :disabled="!form.name" @click="onSave">保存</button>
+      <button class="btn-primary" :disabled="!form.name" @click="onSave">保存</button>
     </view>
-    <view class="tip"><text>测试号阶段：数据仅存于内存，刷新后重置</text></view>
+    <text class="footer">测试号阶段 · 数据仅存于内存，刷新后重置</text>
   </view>
 </template>
 
@@ -183,72 +194,89 @@ function onSave() {
 </script>
 
 <style>
-.edit-page {
-  padding: 20rpx 24rpx 120rpx;
+.page {
+  padding: 24rpx 32rpx 120rpx;
 }
-.form-section {
+.section-header {
+  font-size: 24rpx;
+  color: #8e8e93;
+  padding: 8rpx 8rpx 12rpx;
+  letter-spacing: 1rpx;
+}
+.card {
   background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 20rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
 }
-.form-title {
-  display: block;
-  font-size: 30rpx;
-  font-weight: bold;
-  color: #8b4513;
-  margin-bottom: 16rpx;
-  padding-bottom: 12rpx;
-  border-bottom: 1rpx solid #f0e6d6;
+.group {
+  margin-bottom: 40rpx;
 }
-.form-item {
+.row {
   display: flex;
   align-items: center;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #f7f7f7;
+  justify-content: space-between;
+  padding: 24rpx 32rpx;
+  min-height: 56rpx;
 }
-.form-label {
-  width: 160rpx;
-  font-size: 26rpx;
-  color: #666;
+.row.block {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16rpx;
+}
+.row-label {
+  font-size: 28rpx;
+  color: #1c1c1e;
   flex-shrink: 0;
 }
 .req {
-  color: #dd524d;
+  color: #ff3b30;
+  margin-left: 4rpx;
 }
-.form-input {
+.row-input {
   flex: 1;
-  font-size: 26rpx;
-  color: #333;
+  font-size: 30rpx;
+  color: #1c1c1e;
+  text-align: right;
 }
-.form-picker {
-  flex: 1;
-  font-size: 26rpx;
-  color: #333;
+.row-picker {
+  font-size: 30rpx;
+  color: #1c1c1e;
 }
-.form-textarea {
-  flex: 1;
-  font-size: 26rpx;
-  color: #333;
+.row-textarea {
+  width: 100%;
+  font-size: 28rpx;
+  color: #1c1c1e;
   height: 120rpx;
+  line-height: 1.6;
+}
+.ph {
+  color: #c7c7cc;
+}
+.row-separator {
+  height: 1rpx;
+  background: #e5e5ea;
+  margin-left: 32rpx;
 }
 .actions {
   margin-top: 20rpx;
 }
-.btn-save {
-  background: #8b4513;
+.btn-primary {
+  background: #007aff;
   color: #fff;
   font-size: 30rpx;
-  border-radius: 12rpx;
+  font-weight: 600;
+  border-radius: 20rpx;
+  line-height: 88rpx;
 }
-.btn-save[disabled] {
-  background: #c9a37a;
+.btn-primary[disabled] {
+  background: #9ec4ff;
   color: #fff;
 }
-.tip {
+.footer {
+  display: block;
   text-align: center;
-  margin-top: 20rpx;
   font-size: 22rpx;
-  color: #bbb;
+  color: #c7c7cc;
+  margin-top: 24rpx;
 }
 </style>

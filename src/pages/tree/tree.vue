@@ -2,25 +2,23 @@
   <view class="tree-page">
     <view class="header">
       <text class="title">{{ family.name }}家族树</text>
-      <text class="sub">共 {{ memberCount }} 人 · {{ generationCount }} 世</text>
+      <text class="sub">{{ memberCount }} 人 · {{ generationCount }} 世</text>
     </view>
 
     <view class="legend">
-      <view class="legend-item"><view class="shape male"></view><text>男</text></view>
-      <view class="legend-item"><view class="shape female"></view><text>女</text></view>
-      <text class="legend-tip">左右滑动浏览 · 点击节点查看详情</text>
+      <view class="legend-item"><view class="dot male"></view><text>男</text></view>
+      <view class="legend-item"><view class="dot female"></view><text>女</text></view>
+      <text class="legend-tip">左右滑动 · 点击查看详情</text>
     </view>
 
     <scroll-view scroll-x class="tree-scroll" v-if="layout">
       <view class="tree-canvas" :style="{ width: layout.width + 'rpx', height: layout.height + 'rpx' }">
-        <!-- 连线 -->
         <view
           v-for="(line, i) in layout.lines"
           :key="'l' + i"
           class="line"
           :style="lineStyle(line)"
         />
-        <!-- 节点 -->
         <view
           v-for="node in layout.nodes"
           :key="node.id"
@@ -46,7 +44,6 @@ import type { Gender } from '@/types'
 
 const { family, memberCount, generationCount, buildTree } = useFamilyStore()
 
-// 布局参数（rpx）
 const NODE_W = 100
 const NODE_H = 100
 const SPOUSE_GAP = 30
@@ -68,7 +65,6 @@ interface PlacedLine {
   y2: number
 }
 
-/** 子树宽度（含配偶） */
 function subtreeWidth(node: TreeNode): number {
   const selfWidth =
     node.spouses.length > 0
@@ -99,7 +95,6 @@ function doLayout(tree: TreeNode): {
     const width = subtreeWidth(node)
     const nodeStartX = x + (width - selfWidth) / 2
 
-    // 主成员
     nodes.push({
       id: node.member.id,
       name: node.member.name,
@@ -109,7 +104,6 @@ function doLayout(tree: TreeNode): {
       y,
     })
 
-    // 配偶（横向相邻 + 婚姻线）
     let spouseX = nodeStartX + NODE_W + SPOUSE_GAP
     for (const s of node.spouses) {
       nodes.push({
@@ -129,7 +123,6 @@ function doLayout(tree: TreeNode): {
       spouseX += NODE_W + SPOUSE_GAP
     }
 
-    // 子女
     if (node.children.length > 0) {
       const childrenTotalWidth = node.children.reduce(
         (sum, c, i) => sum + subtreeWidth(c) + (i > 0 ? SIBLING_GAP : 0),
@@ -141,7 +134,6 @@ function doLayout(tree: TreeNode): {
       const parentBottomY = y + NODE_H
       const midY = y + NODE_H + (ROW_H - NODE_H) / 2
 
-      // 父母向下竖线
       lines.push({ x1: parentCenterX, y1: parentBottomY, x2: parentCenterX, y2: midY })
 
       const childCenters: number[] = []
@@ -151,7 +143,6 @@ function doLayout(tree: TreeNode): {
         place(child, childX, childY)
         childX += cw + SIBLING_GAP
       }
-      // 子女横线（兄弟连线）
       if (childCenters.length > 1) {
         lines.push({
           x1: childCenters[0],
@@ -160,7 +151,6 @@ function doLayout(tree: TreeNode): {
           y2: midY,
         })
       }
-      // 各子女向上竖线
       for (const cx of childCenters) {
         lines.push({ x1: cx, y1: midY, x2: cx, y2: childY })
       }
@@ -209,54 +199,52 @@ function chineseNum(n: number): string {
 
 <style>
 .tree-page {
-  padding: 20rpx 0 80rpx;
+  padding: 24rpx 0 80rpx;
 }
 .header {
   text-align: center;
-  margin-bottom: 20rpx;
-  padding: 0 24rpx;
+  margin-bottom: 24rpx;
+  padding: 0 32rpx;
 }
 .title {
   display: block;
-  font-size: 40rpx;
-  font-weight: bold;
-  color: #8b4513;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1c1c1e;
 }
 .sub {
   display: block;
   font-size: 24rpx;
-  color: #999;
+  color: #8e8e93;
   margin-top: 8rpx;
 }
 .legend {
   display: flex;
   align-items: center;
   gap: 24rpx;
-  padding: 16rpx 24rpx;
-  margin-bottom: 16rpx;
+  padding: 0 32rpx 24rpx;
 }
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 8rpx;
+  gap: 10rpx;
   font-size: 24rpx;
-  color: #666;
+  color: #8e8e93;
 }
-.shape {
-  width: 28rpx;
+.dot {
+  width: 8rpx;
   height: 28rpx;
-  background: #fff;
-  border: 3rpx solid #8b4513;
+  border-radius: 4rpx;
 }
-.shape.male {
-  border-radius: 6rpx;
+.dot.male {
+  background: #007aff;
 }
-.shape.female {
-  border-radius: 50%;
+.dot.female {
+  background: #ff6482;
 }
 .legend-tip {
   font-size: 22rpx;
-  color: #bbb;
+  color: #c7c7cc;
   margin-left: auto;
 }
 .tree-scroll {
@@ -265,11 +253,11 @@ function chineseNum(n: number): string {
 }
 .tree-canvas {
   position: relative;
-  margin: 0 24rpx;
+  margin: 0 32rpx;
 }
 .line {
   position: absolute;
-  background: #b08968;
+  background: #c7c7cc;
 }
 .node {
   position: absolute;
@@ -280,28 +268,27 @@ function chineseNum(n: number): string {
   align-items: center;
   justify-content: center;
   background: #fff;
-  border: 3rpx solid #8b4513;
+  border-radius: 16rpx;
+  border-left: 6rpx solid #007aff;
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
   box-sizing: border-box;
 }
-.node.male {
-  border-radius: 8rpx;
-}
 .node.female {
-  border-radius: 50%;
+  border-left-color: #ff6482;
 }
 .node-name {
-  font-size: 22rpx;
-  font-weight: bold;
-  color: #333;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #1c1c1e;
 }
 .node-gen {
   font-size: 18rpx;
-  color: #999;
+  color: #8e8e93;
   margin-top: 2rpx;
 }
 .empty {
   text-align: center;
   padding: 80rpx 0;
-  color: #999;
+  color: #8e8e93;
 }
 </style>

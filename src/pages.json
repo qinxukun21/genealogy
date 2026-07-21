@@ -32,9 +32,9 @@
 		}
 	],
 	"globalStyle": {
-		"navigationBarTextStyle": "white",
+		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "族谱",
-		"navigationBarBackgroundColor": "#8B4513",
-		"backgroundColor": "#F8F8F8"
+		"navigationBarBackgroundColor": "#F7F7FA",
+		"backgroundColor": "#F2F2F7"
 	}
 }

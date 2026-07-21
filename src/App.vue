@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
-onLaunch(() => {
-  console.log("App Launch");
-});
-onShow(() => {
-  console.log("App Show");
-});
-onHide(() => {
-  console.log("App Hide");
-});
+onLaunch(() => {});
+onShow(() => {});
+onHide(() => {});
 </script>
-<style></style>
+
+<style>
+page {
+  background: #f2f2f7;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue",
+    "Microsoft YaHei", sans-serif;
+  color: #1c1c1e;
+  font-size: 28rpx;
+  -webkit-font-smoothing: antialiased;
+}
+</style>
