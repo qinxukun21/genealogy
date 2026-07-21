@@ -2,6 +2,33 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Start Work (Pull All)",
+      "detail": "开始工作：拉取最新代码 + Claude 对话记录（打开项目时自动运行）",
+      "type": "shell",
+      "command": "bash",
+      "args": ["scripts/sync-all.sh", "start"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "runOn": "folderOpen",
+      "problemMatcher": []
+    },
+    {
+      "label": "End Work (Push All)",
+      "detail": "结束工作：推送代码 + Claude 对话记录",
+      "type": "shell",
+      "command": "bash",
+      "args": ["scripts/sync-all.sh", "end"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Sync Claude History (Push)",
       "detail": "把本机 Claude Code 对话记录推送到 GitHub 私有仓库",
       "type": "shell",
