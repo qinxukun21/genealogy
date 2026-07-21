@@ -13,10 +13,11 @@ if exist ".git" (
     git add -A
     git commit -m "sync claude history" 2>nul
     git pull --rebase 2>nul
-    git push
+    call :retry git push
 ) else (
     echo   ~/.claude is not a git repo, skip
 )
+
 echo.
 echo [2/2] Push code...
 cd /d "%PROJECT_DIR%"
@@ -24,9 +25,24 @@ git status --porcelain | findstr "." >nul
 if errorlevel 1 (
     echo   No uncommitted changes.
 ) else (
-    echo   WARNING: uncommitted changes detected. Run: git add -A  then  git commit -m "..."
+    echo   WARNING: uncommitted changes. Run: git add -A then git commit -m "..."
 )
-git push
+call :retry git push
+
 echo.
 echo === Synced to cloud. ===
 pause
+goto :eof
+
+:retry
+set tries=0
+:retry_loop
+set /a tries+=1
+%*
+if not errorlevel 1 goto :eof
+if %tries% LSS 5 (
+    echo   [network unstable, retry %tries%/5 in 5s...]
+    ping -n 6 127.0.0.1 >nul
+    goto retry_loop
+)
+goto :eof
