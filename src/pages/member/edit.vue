@@ -199,33 +199,34 @@ function onSave() {
 }
 .section-header {
   font-size: 24rpx;
-  color: #8e8e93;
-  padding: 8rpx 8rpx 12rpx;
+  color: #86868b;
+  padding: 4rpx 8rpx 12rpx;
   letter-spacing: 1rpx;
 }
 .card {
   background: #fff;
-  border-radius: 24rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid #e5e5ea;
   overflow: hidden;
 }
 .group {
-  margin-bottom: 40rpx;
+  margin-bottom: 36rpx;
 }
 .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24rpx 32rpx;
+  padding: 22rpx 32rpx;
   min-height: 56rpx;
 }
 .row.block {
   flex-direction: column;
   align-items: stretch;
-  gap: 16rpx;
+  gap: 14rpx;
 }
 .row-label {
   font-size: 28rpx;
-  color: #1c1c1e;
+  color: #1d1d1f;
   flex-shrink: 0;
 }
 .req {
@@ -235,22 +236,22 @@ function onSave() {
 .row-input {
   flex: 1;
   font-size: 30rpx;
-  color: #1c1c1e;
+  color: #1d1d1f;
   text-align: right;
 }
 .row-picker {
   font-size: 30rpx;
-  color: #1c1c1e;
+  color: #1d1d1f;
 }
 .row-textarea {
   width: 100%;
   font-size: 28rpx;
-  color: #1c1c1e;
+  color: #1d1d1f;
   height: 120rpx;
   line-height: 1.6;
 }
 .ph {
-  color: #c7c7cc;
+  color: #aeaeb2;
 }
 .row-separator {
   height: 1rpx;
@@ -258,14 +259,14 @@ function onSave() {
   margin-left: 32rpx;
 }
 .actions {
-  margin-top: 20rpx;
+  margin-top: 16rpx;
 }
 .btn-primary {
   background: #007aff;
   color: #fff;
   font-size: 30rpx;
   font-weight: 600;
-  border-radius: 20rpx;
+  border-radius: 16rpx;
   line-height: 88rpx;
 }
 .btn-primary[disabled] {
@@ -276,7 +277,7 @@ function onSave() {
   display: block;
   text-align: center;
   font-size: 22rpx;
-  color: #c7c7cc;
+  color: #aeaeb2;
   margin-top: 24rpx;
 }
 </style>

@@ -7,10 +7,10 @@ onHide(() => {});
 
 <style>
 page {
-  background: #f2f2f7;
+  background: #f0f0f2;
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue",
     "Microsoft YaHei", sans-serif;
-  color: #1c1c1e;
+  color: #1d1d1f;
   font-size: 28rpx;
   -webkit-font-smoothing: antialiased;
 }

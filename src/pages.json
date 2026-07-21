@@ -34,7 +34,7 @@
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "族谱",
-		"navigationBarBackgroundColor": "#F7F7FA",
-		"backgroundColor": "#F2F2F7"
+		"navigationBarBackgroundColor": "#ECECEE",
+		"backgroundColor": "#F0F0F2"
 	}
 }

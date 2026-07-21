@@ -1,7 +1,7 @@
 <template>
   <view v-if="member" class="page">
     <!-- 头部 -->
-    <view class="profile">
+    <view class="card profile">
       <view class="avatar" :class="member.gender">{{ member.name.charAt(0) }}</view>
       <view class="profile-info">
         <view class="name-row">
@@ -13,23 +13,24 @@
           <text v-if="member.courtesyName && member.alias"> · </text>
           <text v-if="member.alias">号 {{ member.alias }}</text>
         </text>
-        <text class="gender">{{ genderText(member.gender) }}</text>
+        <view class="meta-row">
+          <text class="meta">{{ genderText(member.gender) }}</text>
+          <text class="meta-dot">·</text>
+          <text class="meta">{{ datesText }}</text>
+          <text v-if="member.occupation" class="meta-dot">·</text>
+          <text v-if="member.occupation" class="meta">{{ member.occupation }}</text>
+        </view>
       </view>
     </view>
 
     <!-- 基本信息 -->
-    <view class="section-header">基本信息</view>
-    <view class="card group">
-      <view class="row">
-        <text class="row-label">生卒</text>
-        <text class="row-value">{{ datesText }}</text>
-      </view>
-      <view v-if="member.hometown" class="row-separator" />
+    <view v-if="member.hometown || member.occupation" class="section-header">基本信息</view>
+    <view v-if="member.hometown || member.occupation" class="card group">
       <view v-if="member.hometown" class="row">
         <text class="row-label">籍贯</text>
         <text class="row-value">{{ member.hometown }}</text>
       </view>
-      <view v-if="member.occupation" class="row-separator" />
+      <view v-if="member.hometown && member.occupation" class="row-separator" />
       <view v-if="member.occupation" class="row">
         <text class="row-label">功名/职业</text>
         <text class="row-value">{{ member.occupation }}</text>
@@ -87,7 +88,7 @@
     </view>
 
     <view class="actions">
-      <button class="btn-primary" @click="goEdit">编辑</button>
+      <button class="btn-primary" @click="goEdit">编辑成员</button>
     </view>
   </view>
 
@@ -127,7 +128,7 @@ const children = computed(() => (member.value ? getChildrenOf(member.value.id) :
 const datesText = computed(() => {
   if (!member.value) return ''
   if (!member.value.birthDate) return member.value.isAlive ? '在世' : '未知'
-  if (member.value.deathDate) return `${member.value.birthDate} - ${member.value.deathDate}`
+  if (member.value.deathDate) return `${member.value.birthDate}–${member.value.deathDate}`
   return `${member.value.birthDate} 至今`
 })
 
@@ -151,22 +152,26 @@ function goEdit() {
 .page {
   padding: 24rpx 32rpx 120rpx;
 }
+.card {
+  background: #fff;
+  border-radius: 16rpx;
+  border: 1rpx solid #e5e5ea;
+  overflow: hidden;
+}
 .profile {
   display: flex;
   align-items: center;
-  gap: 28rpx;
-  background: #fff;
-  padding: 36rpx 32rpx;
-  border-radius: 24rpx;
-  margin-bottom: 40rpx;
+  gap: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 36rpx;
 }
 .avatar {
-  width: 112rpx;
-  height: 112rpx;
+  width: 108rpx;
+  height: 108rpx;
   border-radius: 50%;
   background: #007aff;
   color: #fff;
-  font-size: 46rpx;
+  font-size: 44rpx;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -185,74 +190,79 @@ function goEdit() {
 .name-row {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: 14rpx;
 }
 .name {
-  font-size: 40rpx;
+  font-size: 38rpx;
   font-weight: 700;
-  color: #1c1c1e;
+  color: #1d1d1f;
 }
 .gen-tag {
   font-size: 22rpx;
   color: #007aff;
   background: #eef4ff;
-  padding: 4rpx 16rpx;
+  padding: 4rpx 14rpx;
   border-radius: 8rpx;
 }
 .alias {
   font-size: 26rpx;
-  color: #8e8e93;
+  color: #86868b;
 }
-.gender {
-  font-size: 26rpx;
-  color: #8e8e93;
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+.meta {
+  font-size: 24rpx;
+  color: #86868b;
+}
+.meta-dot {
+  font-size: 24rpx;
+  color: #c7c7cc;
 }
 .section-header {
   font-size: 24rpx;
-  color: #8e8e93;
-  padding: 8rpx 8rpx 12rpx;
+  color: #86868b;
+  padding: 4rpx 8rpx 12rpx;
   letter-spacing: 1rpx;
 }
-.card {
-  background: #fff;
-  border-radius: 24rpx;
-  overflow: hidden;
-}
 .group {
-  margin-bottom: 40rpx;
+  margin-bottom: 36rpx;
 }
 .content-card {
   padding: 28rpx 32rpx;
-  margin-bottom: 40rpx;
+  margin-bottom: 36rpx;
 }
 .content {
   font-size: 28rpx;
-  color: #1c1c1e;
+  color: #1d1d1f;
   line-height: 1.7;
 }
 .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 28rpx 32rpx;
+  padding: 26rpx 32rpx;
   min-height: 48rpx;
 }
 .row-label {
   font-size: 28rpx;
-  color: #8e8e93;
+  color: #86868b;
   flex-shrink: 0;
 }
 .row-value {
   font-size: 28rpx;
-  color: #1c1c1e;
+  color: #1d1d1f;
 }
 .row-right {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: 10rpx;
 }
 .row-arrow {
-  font-size: 34rpx;
+  font-size: 32rpx;
   color: #c7c7cc;
   font-weight: 300;
 }
@@ -262,22 +272,22 @@ function goEdit() {
   margin-left: 32rpx;
 }
 .empty-text {
-  color: #c7c7cc;
+  color: #aeaeb2;
 }
 .actions {
-  margin-top: 20rpx;
+  margin-top: 16rpx;
 }
 .btn-primary {
   background: #007aff;
   color: #fff;
   font-size: 30rpx;
   font-weight: 600;
-  border-radius: 20rpx;
+  border-radius: 16rpx;
   line-height: 88rpx;
 }
 .not-found {
   text-align: center;
   padding: 120rpx 0;
-  color: #8e8e93;
+  color: #86868b;
 }
 </style>

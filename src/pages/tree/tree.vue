@@ -28,6 +28,7 @@
           @click="goDetail(node.id)"
         >
           <text class="node-name">{{ node.name }}</text>
+          <text v-if="node.dates" class="node-dates">{{ node.dates }}</text>
           <text class="node-gen">{{ chineseNum(node.generation) }}世</text>
         </view>
       </view>
@@ -40,15 +41,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useFamilyStore, type TreeNode } from '@/store/family'
-import type { Gender } from '@/types'
+import type { Gender, Member } from '@/types'
 
 const { family, memberCount, generationCount, buildTree } = useFamilyStore()
 
-const NODE_W = 100
-const NODE_H = 100
-const SPOUSE_GAP = 30
-const SIBLING_GAP = 30
-const ROW_H = 200
+const NODE_W = 140
+const NODE_H = 112
+const SPOUSE_GAP = 24
+const SIBLING_GAP = 28
+const ROW_H = 220
 
 interface PlacedNode {
   id: string
@@ -57,12 +58,18 @@ interface PlacedNode {
   generation: number
   x: number
   y: number
+  dates: string
 }
 interface PlacedLine {
   x1: number
   y1: number
   x2: number
   y2: number
+}
+
+function datesOf(m: Member): string {
+  if (m.birthDate && m.deathDate) return `${m.birthDate}–${m.deathDate}`
+  return m.birthDate || m.deathDate || ''
 }
 
 function subtreeWidth(node: TreeNode): number {
@@ -102,6 +109,7 @@ function doLayout(tree: TreeNode): {
       generation: node.member.generation,
       x: nodeStartX,
       y,
+      dates: datesOf(node.member),
     })
 
     let spouseX = nodeStartX + NODE_W + SPOUSE_GAP
@@ -113,6 +121,7 @@ function doLayout(tree: TreeNode): {
         generation: s.generation,
         x: spouseX,
         y,
+        dates: datesOf(s),
       })
       lines.push({
         x1: nodeStartX + NODE_W,
@@ -203,20 +212,20 @@ function chineseNum(n: number): string {
 }
 .header {
   text-align: center;
-  margin-bottom: 24rpx;
+  margin-bottom: 20rpx;
   padding: 0 32rpx;
 }
 .title {
   display: block;
-  font-size: 36rpx;
+  font-size: 34rpx;
   font-weight: 700;
-  color: #1c1c1e;
+  color: #1d1d1f;
 }
 .sub {
   display: block;
   font-size: 24rpx;
-  color: #8e8e93;
-  margin-top: 8rpx;
+  color: #86868b;
+  margin-top: 6rpx;
 }
 .legend {
   display: flex;
@@ -229,12 +238,12 @@ function chineseNum(n: number): string {
   align-items: center;
   gap: 10rpx;
   font-size: 24rpx;
-  color: #8e8e93;
+  color: #86868b;
 }
 .dot {
-  width: 8rpx;
-  height: 28rpx;
-  border-radius: 4rpx;
+  width: 6rpx;
+  height: 24rpx;
+  border-radius: 3rpx;
 }
 .dot.male {
   background: #007aff;
@@ -244,7 +253,7 @@ function chineseNum(n: number): string {
 }
 .legend-tip {
   font-size: 22rpx;
-  color: #c7c7cc;
+  color: #aeaeb2;
   margin-left: auto;
 }
 .tree-scroll {
@@ -261,34 +270,38 @@ function chineseNum(n: number): string {
 }
 .node {
   position: absolute;
-  width: 100rpx;
-  height: 100rpx;
+  width: 140rpx;
+  height: 112rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   background: #fff;
-  border-radius: 16rpx;
-  border-left: 6rpx solid #007aff;
-  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
+  border-radius: 14rpx;
+  border: 1rpx solid #e5e5ea;
+  border-left: 5rpx solid #007aff;
   box-sizing: border-box;
+  gap: 2rpx;
 }
 .node.female {
   border-left-color: #ff6482;
 }
 .node-name {
-  font-size: 24rpx;
+  font-size: 26rpx;
   font-weight: 600;
-  color: #1c1c1e;
+  color: #1d1d1f;
+}
+.node-dates {
+  font-size: 18rpx;
+  color: #86868b;
 }
 .node-gen {
   font-size: 18rpx;
-  color: #8e8e93;
-  margin-top: 2rpx;
+  color: #aeaeb2;
 }
 .empty {
   text-align: center;
   padding: 80rpx 0;
-  color: #8e8e93;
+  color: #86868b;
 }
 </style>
