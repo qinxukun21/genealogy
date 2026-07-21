@@ -5,8 +5,7 @@
       "label": "Start Work (Pull All)",
       "detail": "开始工作：拉取最新代码 + Claude 对话记录（打开项目时自动运行）",
       "type": "shell",
-      "command": "bash",
-      "args": ["scripts/sync-all.sh", "start"],
+      "command": "scripts\\start-work.bat",
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
@@ -19,34 +18,7 @@
       "label": "End Work (Push All)",
       "detail": "结束工作：推送代码 + Claude 对话记录",
       "type": "shell",
-      "command": "bash",
-      "args": ["scripts/sync-all.sh", "end"],
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Sync Claude History (Push)",
-      "detail": "把本机 Claude Code 对话记录推送到 GitHub 私有仓库",
-      "type": "shell",
-      "command": "bash",
-      "args": ["scripts/sync-claude.sh", "push"],
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Sync Claude History (Pull)",
-      "detail": "从 GitHub 私有仓库拉取 Claude Code 对话记录到本机",
-      "type": "shell",
-      "command": "bash",
-      "args": ["scripts/sync-claude.sh", "pull"],
+      "command": "scripts\\end-work.bat",
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
