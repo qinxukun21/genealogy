@@ -41,13 +41,19 @@ npm run type-check
 │   │   ├── index/      # 首页
 │   │   ├── tree/       # 家族树
 │   │   └── profile/    # 我的
+│   ├── components/     # 组件
+│   ├── api/            # 接口调用（云开发）
+│   ├── utils/          # 工具函数
+│   ├── types/          # 类型定义
 │   ├── static/         # 静态资源
 │   ├── App.vue
 │   ├── main.ts
 │   ├── manifest.json   # 应用配置（含 AppID）
 │   ├── pages.json      # 页面路由
 │   └── uni.scss        # 全局样式变量
-├── .vscode/            # VSCode 团队配置（含同步任务）
+├── scripts/            # 同步脚本（start-work.bat / end-work.bat）
+├── docs/               # 文档（家用电脑配置指南等）
+├── .vscode/            # VSCode 配置（同步任务）
 ├── package.json
 ├── tsconfig.json
 └── vite.config.ts
