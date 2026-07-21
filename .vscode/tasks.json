@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Sync Claude History (Push)",
+      "detail": "把本机 Claude Code 对话记录推送到 GitHub 私有仓库",
+      "type": "shell",
+      "command": "bash",
+      "args": ["scripts/sync-claude.sh", "push"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Sync Claude History (Pull)",
+      "detail": "从 GitHub 私有仓库拉取 Claude Code 对话记录到本机",
+      "type": "shell",
+      "command": "bash",
+      "args": ["scripts/sync-claude.sh", "pull"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}
