@@ -17,6 +17,18 @@
 			"style": {
 				"navigationBarTitleText": "我的"
 			}
+		},
+		{
+			"path": "pages/member/detail",
+			"style": {
+				"navigationBarTitleText": "成员详情"
+			}
+		},
+		{
+			"path": "pages/member/edit",
+			"style": {
+				"navigationBarTitleText": "录入成员"
+			}
 		}
 	],
 	"globalStyle": {
