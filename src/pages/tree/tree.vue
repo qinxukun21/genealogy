@@ -5,69 +5,197 @@
       <text class="sub">共 {{ memberCount }} 人 · {{ generationCount }} 世</text>
     </view>
 
-    <view v-if="flatList.length === 0" class="empty">
-      <text>暂无族谱数据</text>
+    <view class="legend">
+      <view class="legend-item"><view class="shape male"></view><text>男</text></view>
+      <view class="legend-item"><view class="shape female"></view><text>女</text></view>
+      <text class="legend-tip">左右滑动浏览 · 点击节点查看详情</text>
     </view>
 
-    <view v-else class="tree-list">
-      <view
-        v-for="item in flatList"
-        :key="item.member.id"
-        class="node"
-        :style="{ paddingLeft: 24 + item.depth * 40 + 'rpx' }"
-        @click="goDetail(item.member.id)"
-      >
-        <view class="card">
-          <view class="card-main">
-            <text class="name">{{ item.member.name }}</text>
-            <text v-if="item.member.courtesyName" class="courtesy">字 {{ item.member.courtesyName }}</text>
-            <text class="gen">{{ chineseNum(item.member.generation) }}世</text>
-          </view>
-          <view class="card-sub">
-            <text v-if="item.member.birthDate" class="dates">
-              {{ item.member.birthDate }}{{ item.member.deathDate ? ' - ' + item.member.deathDate : ' 至今' }}
-            </text>
-            <text v-if="item.spouses.length" class="spouse">
-              配偶：{{ item.spouses.map((s) => s.name).join('、') }}
-            </text>
-          </view>
+    <scroll-view scroll-x class="tree-scroll" v-if="layout">
+      <view class="tree-canvas" :style="{ width: layout.width + 'rpx', height: layout.height + 'rpx' }">
+        <!-- 连线 -->
+        <view
+          v-for="(line, i) in layout.lines"
+          :key="'l' + i"
+          class="line"
+          :style="lineStyle(line)"
+        />
+        <!-- 节点 -->
+        <view
+          v-for="node in layout.nodes"
+          :key="node.id"
+          class="node"
+          :class="node.gender"
+          :style="{ left: node.x + 'rpx', top: node.y + 'rpx' }"
+          @click="goDetail(node.id)"
+        >
+          <text class="node-name">{{ node.name }}</text>
+          <text class="node-gen">{{ chineseNum(node.generation) }}世</text>
         </view>
       </view>
-    </view>
+    </scroll-view>
 
-    <view class="tip">
-      <text>点击成员查看详情</text>
-    </view>
+    <view v-else class="empty"><text>暂无族谱数据</text></view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useFamilyStore, type TreeNode } from '@/store/family'
-import type { Member } from '@/types'
+import type { Gender } from '@/types'
 
 const { family, memberCount, generationCount, buildTree } = useFamilyStore()
 
-interface FlatNode {
-  member: Member
-  spouses: Member[]
-  depth: number
+// 布局参数（rpx）
+const NODE_W = 100
+const NODE_H = 100
+const SPOUSE_GAP = 30
+const SIBLING_GAP = 30
+const ROW_H = 200
+
+interface PlacedNode {
+  id: string
+  name: string
+  gender: Gender
+  generation: number
+  x: number
+  y: number
+}
+interface PlacedLine {
+  x1: number
+  y1: number
+  x2: number
+  y2: number
 }
 
-function flatten(node: TreeNode, depth: number, list: FlatNode[]) {
-  list.push({ member: node.member, spouses: node.spouses, depth })
-  for (const child of node.children) {
-    flatten(child, depth + 1, list)
+/** 子树宽度（含配偶） */
+function subtreeWidth(node: TreeNode): number {
+  const selfWidth =
+    node.spouses.length > 0
+      ? NODE_W * (1 + node.spouses.length) + SPOUSE_GAP * node.spouses.length
+      : NODE_W
+  if (node.children.length === 0) return selfWidth
+  const childrenWidth = node.children.reduce(
+    (sum, c, i) => sum + subtreeWidth(c) + (i > 0 ? SIBLING_GAP : 0),
+    0,
+  )
+  return Math.max(selfWidth, childrenWidth)
+}
+
+function doLayout(tree: TreeNode): {
+  nodes: PlacedNode[]
+  lines: PlacedLine[]
+  width: number
+  height: number
+} {
+  const nodes: PlacedNode[] = []
+  const lines: PlacedLine[] = []
+
+  function place(node: TreeNode, x: number, y: number) {
+    const selfWidth =
+      node.spouses.length > 0
+        ? NODE_W * (1 + node.spouses.length) + SPOUSE_GAP * node.spouses.length
+        : NODE_W
+    const width = subtreeWidth(node)
+    const nodeStartX = x + (width - selfWidth) / 2
+
+    // 主成员
+    nodes.push({
+      id: node.member.id,
+      name: node.member.name,
+      gender: node.member.gender,
+      generation: node.member.generation,
+      x: nodeStartX,
+      y,
+    })
+
+    // 配偶（横向相邻 + 婚姻线）
+    let spouseX = nodeStartX + NODE_W + SPOUSE_GAP
+    for (const s of node.spouses) {
+      nodes.push({
+        id: s.id,
+        name: s.name,
+        gender: s.gender,
+        generation: s.generation,
+        x: spouseX,
+        y,
+      })
+      lines.push({
+        x1: nodeStartX + NODE_W,
+        y1: y + NODE_H / 2,
+        x2: spouseX,
+        y2: y + NODE_H / 2,
+      })
+      spouseX += NODE_W + SPOUSE_GAP
+    }
+
+    // 子女
+    if (node.children.length > 0) {
+      const childrenTotalWidth = node.children.reduce(
+        (sum, c, i) => sum + subtreeWidth(c) + (i > 0 ? SIBLING_GAP : 0),
+        0,
+      )
+      let childX = x + (width - childrenTotalWidth) / 2
+      const childY = y + ROW_H
+      const parentCenterX = nodeStartX + selfWidth / 2
+      const parentBottomY = y + NODE_H
+      const midY = y + NODE_H + (ROW_H - NODE_H) / 2
+
+      // 父母向下竖线
+      lines.push({ x1: parentCenterX, y1: parentBottomY, x2: parentCenterX, y2: midY })
+
+      const childCenters: number[] = []
+      for (const child of node.children) {
+        const cw = subtreeWidth(child)
+        childCenters.push(childX + cw / 2)
+        place(child, childX, childY)
+        childX += cw + SIBLING_GAP
+      }
+      // 子女横线（兄弟连线）
+      if (childCenters.length > 1) {
+        lines.push({
+          x1: childCenters[0],
+          y1: midY,
+          x2: childCenters[childCenters.length - 1],
+          y2: midY,
+        })
+      }
+      // 各子女向上竖线
+      for (const cx of childCenters) {
+        lines.push({ x1: cx, y1: midY, x2: cx, y2: childY })
+      }
+    }
+  }
+
+  place(tree, 0, 0)
+
+  const maxX = Math.max(...nodes.map((n) => n.x + NODE_W))
+  const maxY = Math.max(...nodes.map((n) => n.y + NODE_H))
+  return { nodes, lines, width: maxX + 40, height: maxY + 40 }
+}
+
+const layout = computed(() => {
+  const tree = buildTree()
+  if (!tree) return null
+  return doLayout(tree)
+})
+
+function lineStyle(line: PlacedLine) {
+  if (line.y1 === line.y2) {
+    return {
+      left: Math.min(line.x1, line.x2) + 'rpx',
+      top: line.y1 + 'rpx',
+      width: Math.abs(line.x2 - line.x1) + 'rpx',
+      height: '2rpx',
+    }
+  }
+  return {
+    left: line.x1 + 'rpx',
+    top: Math.min(line.y1, line.y2) + 'rpx',
+    width: '2rpx',
+    height: Math.abs(line.y2 - line.y1) + 'rpx',
   }
 }
-
-const flatList = computed<FlatNode[]>(() => {
-  const tree = buildTree()
-  if (!tree) return []
-  const list: FlatNode[] = []
-  flatten(tree, 0, list)
-  return list
-})
 
 function goDetail(id: string) {
   uni.navigateTo({ url: `/pages/member/detail?id=${id}` })
@@ -81,11 +209,12 @@ function chineseNum(n: number): string {
 
 <style>
 .tree-page {
-  padding: 20rpx 24rpx 80rpx;
+  padding: 20rpx 0 80rpx;
 }
 .header {
   text-align: center;
-  margin-bottom: 30rpx;
+  margin-bottom: 20rpx;
+  padding: 0 24rpx;
 }
 .title {
   display: block;
@@ -99,59 +228,80 @@ function chineseNum(n: number): string {
   color: #999;
   margin-top: 8rpx;
 }
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 16rpx 24rpx;
+  margin-bottom: 16rpx;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 24rpx;
+  color: #666;
+}
+.shape {
+  width: 28rpx;
+  height: 28rpx;
+  background: #fff;
+  border: 3rpx solid #8b4513;
+}
+.shape.male {
+  border-radius: 6rpx;
+}
+.shape.female {
+  border-radius: 50%;
+}
+.legend-tip {
+  font-size: 22rpx;
+  color: #bbb;
+  margin-left: auto;
+}
+.tree-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+.tree-canvas {
+  position: relative;
+  margin: 0 24rpx;
+}
+.line {
+  position: absolute;
+  background: #b08968;
+}
+.node {
+  position: absolute;
+  width: 100rpx;
+  height: 100rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 3rpx solid #8b4513;
+  box-sizing: border-box;
+}
+.node.male {
+  border-radius: 8rpx;
+}
+.node.female {
+  border-radius: 50%;
+}
+.node-name {
+  font-size: 22rpx;
+  font-weight: bold;
+  color: #333;
+}
+.node-gen {
+  font-size: 18rpx;
+  color: #999;
+  margin-top: 2rpx;
+}
 .empty {
   text-align: center;
   padding: 80rpx 0;
   color: #999;
-}
-.tree-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-.card {
-  background: #fff;
-  border-radius: 12rpx;
-  padding: 20rpx 24rpx;
-  border-left: 6rpx solid #8b4513;
-}
-.card-main {
-  display: flex;
-  align-items: baseline;
-  gap: 16rpx;
-  flex-wrap: wrap;
-}
-.name {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-}
-.courtesy {
-  font-size: 24rpx;
-  color: #666;
-}
-.gen {
-  font-size: 22rpx;
-  color: #fff;
-  background: #8b4513;
-  padding: 2rpx 12rpx;
-  border-radius: 8rpx;
-}
-.card-sub {
-  margin-top: 10rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 4rpx;
-}
-.dates,
-.spouse {
-  font-size: 24rpx;
-  color: #888;
-}
-.tip {
-  text-align: center;
-  margin-top: 40rpx;
-  font-size: 24rpx;
-  color: #bbb;
 }
 </style>
