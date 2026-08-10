@@ -89,6 +89,7 @@
 
     <view class="actions">
       <button class="btn-primary" @click="goEdit">编辑成员</button>
+      <button class="btn-danger" @click="onDelete">删除成员</button>
     </view>
   </view>
 
@@ -100,7 +101,7 @@ import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useFamilyStore } from '@/store/family'
 
-const { getMemberById, getChildrenOf, getSpousesOf } = useFamilyStore()
+const { getMemberById, getChildrenOf, getSpousesOf, deleteMember } = useFamilyStore()
 
 const memberId = ref('')
 onLoad((options) => {
@@ -145,6 +146,20 @@ function goDetail(id: string) {
 }
 function goEdit() {
   uni.navigateTo({ url: `/pages/member/edit?id=${memberId.value}` })
+}
+function onDelete() {
+  uni.showModal({
+    title: '删除该成员？',
+    content: '删除后其作为父母/配偶的关联也会一并移除，且不可恢复。',
+    confirmText: '删除',
+    confirmColor: '#ff3b30',
+    success: (res) => {
+      if (!res.confirm) return
+      deleteMember(memberId.value)
+      uni.showToast({ title: '已删除', icon: 'success' })
+      setTimeout(() => uni.navigateBack(), 800)
+    },
+  })
 }
 </script>
 
@@ -276,6 +291,9 @@ function goEdit() {
 }
 .actions {
   margin-top: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
 }
 .btn-primary {
   background: #007aff;
@@ -284,6 +302,15 @@ function goEdit() {
   font-weight: 600;
   border-radius: 16rpx;
   line-height: 88rpx;
+}
+.btn-danger {
+  background: #fff;
+  color: #ff3b30;
+  font-size: 30rpx;
+  font-weight: 600;
+  border-radius: 16rpx;
+  line-height: 88rpx;
+  border: 1rpx solid #ff3b30;
 }
 .not-found {
   text-align: center;

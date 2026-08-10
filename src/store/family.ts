@@ -78,6 +78,45 @@ export function useFamilyStore() {
     }
   }
 
+  /** 更新成员（同步更新配偶双向关系） */
+  function updateMember(member: Member): void {
+    const idx = state.members.findIndex((m) => m.id === member.id)
+    if (idx < 0) return
+    const old = state.members[idx]
+    // 移除旧关系中已不再保留的配偶
+    for (const sid of old.spouseIds) {
+      if (!member.spouseIds.includes(sid)) {
+        const s = getMemberById(sid)
+        if (s) s.spouseIds = s.spouseIds.filter((x) => x !== member.id)
+      }
+    }
+    // 登记新关系中尚未双向的配偶
+    for (const sid of member.spouseIds) {
+      const s = getMemberById(sid)
+      if (s && !s.spouseIds.includes(member.id)) {
+        s.spouseIds.push(member.id)
+      }
+    }
+    state.members[idx] = { ...old, ...member }
+  }
+
+  /** 删除成员（同时从配偶、子女关系里移除引用） */
+  function deleteMember(id: string): void {
+    const target = getMemberById(id)
+    if (!target) return
+    // 从配偶双向关系移除
+    for (const sid of target.spouseIds) {
+      const s = getMemberById(sid)
+      if (s) s.spouseIds = s.spouseIds.filter((x) => x !== id)
+    }
+    // 从子女的父/母引用移除
+    for (const m of state.members) {
+      if (m.fatherId === id) m.fatherId = undefined
+      if (m.motherId === id) m.motherId = undefined
+    }
+    state.members = state.members.filter((m) => m.id !== id)
+  }
+
   return {
     family,
     members,
@@ -90,5 +129,7 @@ export function useFamilyStore() {
     getMembersByGeneration,
     buildTree,
     addMember,
+    updateMember,
+    deleteMember,
   }
 }

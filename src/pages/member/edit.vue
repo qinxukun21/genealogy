@@ -96,18 +96,24 @@
     </view>
 
     <view class="actions">
-      <button class="btn-primary" :disabled="!form.name" @click="onSave">保存</button>
+      <button class="btn-primary" :disabled="!form.name" @click="onSave">
+        {{ isEdit ? '保存修改' : '保存' }}
+      </button>
     </view>
     <text class="footer">测试号阶段 · 数据仅存于内存，刷新后重置</text>
   </view>
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from 'vue'
+import { reactive, computed, ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { useFamilyStore } from '@/store/family'
 import type { Gender, Member } from '@/types'
 
-const { members, addMember } = useFamilyStore()
+const { members, getMemberById, addMember, updateMember } = useFamilyStore()
+
+const editId = ref('') // 空 = 新增
+const isEdit = computed(() => !!editId.value)
 
 const form = reactive({
   name: '',
@@ -127,6 +133,33 @@ const form = reactive({
   biography: '',
 })
 
+onLoad((options) => {
+  editId.value = options?.id || ''
+  if (editId.value) {
+    const m = getMemberById(editId.value)
+    if (m) fillForm(m)
+  }
+})
+
+/** 编辑时回填表单 */
+function fillForm(m: Member) {
+  form.name = m.name
+  form.gender = m.gender
+  form.generation = m.generation || 1
+  form.courtesyName = m.courtesyName || ''
+  form.alias = m.alias || ''
+  form.birthDate = m.birthDate || ''
+  form.isAlive = m.isAlive
+  form.deathDate = m.deathDate || ''
+  form.hometown = m.hometown || ''
+  form.occupation = m.occupation || ''
+  form.fatherId = m.fatherId || ''
+  form.motherId = m.motherId || ''
+  form.spouseId = m.spouseIds?.[0] || ''
+  form.summary = m.summary || ''
+  form.biography = m.biography || ''
+}
+
 const genderOptions: { text: string; value: Gender }[] = [
   { text: '男', value: 'male' },
   { text: '女', value: 'female' },
@@ -143,9 +176,10 @@ function onAliveChange(e: any) {
   form.isAlive = e.detail.value
 }
 
-const fatherOptions = computed(() => members.value.filter((m) => m.gender === 'male'))
-const motherOptions = computed(() => members.value.filter((m) => m.gender === 'female'))
-const spouseOptions = computed(() => members.value)
+const others = computed(() => members.value.filter((m) => m.id !== editId.value))
+const fatherOptions = computed(() => others.value.filter((m) => m.gender === 'male'))
+const motherOptions = computed(() => others.value.filter((m) => m.gender === 'female'))
+const spouseOptions = computed(() => others.value)
 
 const fatherName = computed(() => fatherOptions.value.find((m) => m.id === form.fatherId)?.name)
 const motherName = computed(() => motherOptions.value.find((m) => m.id === form.motherId)?.name)
@@ -167,8 +201,11 @@ function onSave() {
     return
   }
   const now = new Date().toISOString()
+  const base = isEdit.value
+    ? { ...(getMemberById(editId.value) as Member), updatedAt: now }
+    : { id: 'm' + Date.now(), createdAt: now, updatedAt: now }
   const member: Member = {
-    id: 'm' + Date.now(),
+    ...base,
     name: form.name,
     courtesyName: form.courtesyName || undefined,
     alias: form.alias || undefined,
@@ -184,11 +221,13 @@ function onSave() {
     fatherId: form.fatherId || undefined,
     motherId: form.motherId || undefined,
     spouseIds: form.spouseId ? [form.spouseId] : [],
-    createdAt: now,
-    updatedAt: now,
   }
-  addMember(member)
-  uni.showToast({ title: '已保存', icon: 'success' })
+  if (isEdit.value) {
+    updateMember(member)
+  } else {
+    addMember(member)
+  }
+  uni.showToast({ title: isEdit.value ? '已更新' : '已保存', icon: 'success' })
   setTimeout(() => uni.navigateBack(), 1000)
 }
 </script>
