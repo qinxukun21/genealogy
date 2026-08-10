@@ -1,6 +1,14 @@
-import { reactive, computed } from 'vue'
+import { reactive, computed, ref } from 'vue'
 import type { Family, Member } from '@/types'
 import { getFamily, getAllMembers } from '@/api/mock'
+import {
+  isCloudAvailable,
+  login,
+  initDb,
+  getFamilyData,
+  saveMember,
+  deleteMember as cloudDeleteMember,
+} from '@/api/cloud'
 
 export interface TreeNode {
   member: Member
@@ -12,6 +20,11 @@ const state = reactive({
   family: getFamily() as Family,
   members: getAllMembers() as Member[],
 })
+
+/** 是否已从云端加载（H5 恒为 false，走 mock） */
+const loaded = ref(false)
+/** 当前用户在家族内的角色 */
+const currentRole = ref<'owner' | 'admin' | 'member' | null>(null)
 
 export function useFamilyStore() {
   const family = computed(() => state.family)
@@ -67,7 +80,33 @@ export function useFamilyStore() {
     }
   }
 
-  /** 新增成员（维护配偶双向关系） */
+  /**
+   * 从云端加载数据（仅小程序端有效）。
+   * 流程：登录 → 若无家族则初始化种子 → 拉取家族数据。
+   * H5 端无云，直接保留 mock。
+   */
+  async function loadRemote(): Promise<void> {
+    if (!isCloudAvailable()) return
+    try {
+      await login()
+      let data = await getFamilyData()
+      if (!data.currentFamilyId) {
+        await initDb()
+        data = await getFamilyData()
+      }
+      if (data.currentFamilyId && data.families.length > 0) {
+        state.family = data.families[0]
+        state.members = data.members
+        currentRole.value = data.currentRole
+      }
+      loaded.value = true
+    } catch (e) {
+      // 云端不可用（未部署云函数等）时保留内存 mock，不影响浏览
+      console.error('[cloud] loadRemote failed, fallback to mock:', e)
+    }
+  }
+
+  /** 新增成员（维护配偶双向关系；小程序同步云端） */
   function addMember(member: Member): void {
     state.members.push(member)
     for (const sid of member.spouseIds) {
@@ -76,9 +115,12 @@ export function useFamilyStore() {
         s.spouseIds.push(member.id)
       }
     }
+    if (isCloudAvailable()) {
+      saveMember(member, state.family.id).catch((e) => console.error('[cloud] addMember', e))
+    }
   }
 
-  /** 更新成员（同步更新配偶双向关系） */
+  /** 更新成员（同步更新配偶双向关系；小程序同步云端） */
   function updateMember(member: Member): void {
     const idx = state.members.findIndex((m) => m.id === member.id)
     if (idx < 0) return
@@ -98,9 +140,12 @@ export function useFamilyStore() {
       }
     }
     state.members[idx] = { ...old, ...member }
+    if (isCloudAvailable()) {
+      saveMember(member, state.family.id).catch((e) => console.error('[cloud] updateMember', e))
+    }
   }
 
-  /** 删除成员（同时从配偶、子女关系里移除引用） */
+  /** 删除成员（同时从配偶、子女关系里移除引用；小程序同步云端） */
   function deleteMember(id: string): void {
     const target = getMemberById(id)
     if (!target) return
@@ -115,6 +160,9 @@ export function useFamilyStore() {
       if (m.motherId === id) m.motherId = undefined
     }
     state.members = state.members.filter((m) => m.id !== id)
+    if (isCloudAvailable()) {
+      cloudDeleteMember(id, state.family.id).catch((e) => console.error('[cloud] deleteMember', e))
+    }
   }
 
   return {
@@ -123,6 +171,8 @@ export function useFamilyStore() {
     memberCount,
     generationCount,
     originator,
+    loaded,
+    currentRole,
     getMemberById,
     getChildrenOf,
     getSpousesOf,
@@ -131,5 +181,6 @@ export function useFamilyStore() {
     addMember,
     updateMember,
     deleteMember,
+    loadRemote,
   }
 }

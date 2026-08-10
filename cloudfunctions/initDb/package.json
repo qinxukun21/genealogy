@@ -1,0 +1,9 @@
+{
+  "name": "initDb",
+  "version": "1.0.0",
+  "description": "一键初始化：建集合 + 种子张氏家族 + 把当前用户设为 owner",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

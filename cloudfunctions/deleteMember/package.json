@@ -1,0 +1,9 @@
+{
+  "name": "deleteMember",
+  "version": "1.0.0",
+  "description": "删除成员（需 admin/owner），并清理关联引用",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

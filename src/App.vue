@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
-onLaunch(() => {});
+import { initCloud } from "@/api/cloud";
+import { useFamilyStore } from "@/store/family";
+
+onLaunch(() => {
+  // 小程序端：初始化云开发并从云端加载数据；H5 端自动走 mock
+  initCloud();
+  const { loadRemote } = useFamilyStore();
+  loadRemote();
+});
 onShow(() => {});
 onHide(() => {});
 </script>

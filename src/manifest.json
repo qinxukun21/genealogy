@@ -50,7 +50,8 @@
     "quickapp" : {},
     /* 小程序特有相关 */
     "mp-weixin" : {
-        "appid" : "",
+        "appid" : "wx171f9bb87c25e38f",
+        "cloudfunctionRoot" : "../../cloudfunctions/",
         "setting" : {
             "urlCheck" : false
         },
