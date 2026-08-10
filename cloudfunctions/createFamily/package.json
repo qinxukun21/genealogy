@@ -1,0 +1,9 @@
+{
+  "name": "createFamily",
+  "version": "1.0.0",
+  "description": "创建新家族，并把当前用户设为 owner",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

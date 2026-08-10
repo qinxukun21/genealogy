@@ -7,7 +7,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-exports.main = async () => {
+exports.main = async (event) => {
   const { OPENID } = cloud.getWXContext()
   if (!OPENID) return { code: 401, msg: '未登录' }
 
@@ -30,19 +30,23 @@ exports.main = async () => {
     role: relList.find((r) => r.familyId === f._id)?.role || 'member',
   }))
 
-  // 默认取第一个家族
-  const primary = families[0]
-  const primaryId = primary.id
-  const currentRole = relList.find((r) => r.familyId === primaryId)?.role || 'member'
+  // 指定 familyId：校验该用户有权访问后返回该家族；否则默认第一个
+  const requestedId = event && event.familyId
+  const target = requestedId
+    ? families.find((f) => f.id === requestedId)
+    : families[0]
+  if (!target) return { code: 403, msg: '无权访问该家族' }
 
-  const memRes = await db.collection('members').where({ familyId: primaryId }).get()
+  const currentRole = relList.find((r) => r.familyId === target.id)?.role || 'member'
+
+  const memRes = await db.collection('members').where({ familyId: target.id }).get()
   const members = memRes.data.map((m) => ({ ...m, id: m._id }))
 
   return {
     code: 0,
     data: {
       families,
-      currentFamilyId: primaryId,
+      currentFamilyId: target.id,
       currentRole,
       members,
     },

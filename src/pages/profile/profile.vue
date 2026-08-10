@@ -31,6 +31,14 @@
           <text class="row-arrow">›</text>
         </view>
       </view>
+      <view class="row-separator" />
+      <view class="row" @click="onCreateFamily">
+        <text class="row-label">创建新家族</text>
+        <view class="row-right">
+          <text class="row-value">多家族</text>
+          <text class="row-arrow">›</text>
+        </view>
+      </view>
     </view>
 
     <!-- 分组：数据 -->
@@ -62,7 +70,30 @@
 
 <script setup lang="ts">
 import { useFamilyStore } from '@/store/family'
-const { family, memberCount, generationCount } = useFamilyStore()
+const { family, memberCount, generationCount, createFamily } = useFamilyStore()
+
+function onCreateFamily() {
+  uni.showModal({
+    title: '创建新家族',
+    editable: true,
+    placeholderText: '家族名，如 李氏',
+    success: async (res) => {
+      if (!res.confirm) return
+      const name = (res.content || '').trim()
+      if (!name) {
+        uni.showToast({ title: '请输入家族名', icon: 'none' })
+        return
+      }
+      try {
+        await createFamily(name, name.slice(0, 1))
+        uni.showToast({ title: '已创建并切换', icon: 'success' })
+        setTimeout(() => uni.reLaunch({ url: '/pages/index/index' }), 800)
+      } catch (e) {
+        uni.showToast({ title: '创建失败', icon: 'none' })
+      }
+    },
+  })
+}
 </script>
 
 <style>

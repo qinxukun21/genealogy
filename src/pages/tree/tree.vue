@@ -1,14 +1,18 @@
 <template>
   <view class="tree-page">
     <view class="header">
-      <text class="title">{{ family.name }}家族树</text>
-      <text class="sub">{{ memberCount }} 人 · {{ generationCount }} 世</text>
+      <text class="title">{{ networkMode ? '家族网络' : family.name + '家族树' }}</text>
+      <text class="sub">{{ networkMode ? '多家族拼接' : memberCount + ' 人 · ' + generationCount + ' 世' }}</text>
+      <view class="network-toggle" @click="toggleNetwork">
+        <text class="toggle-label">拼接</text>
+        <switch :checked="networkMode" color="#007AFF" style="transform: scale(0.7)" @change="toggleNetwork" />
+      </view>
     </view>
 
     <view class="legend">
       <view class="legend-item"><view class="dot male"></view><text>男</text></view>
       <view class="legend-item"><view class="dot female"></view><text>女</text></view>
-      <text class="legend-tip">左右滑动 · 点击查看详情</text>
+      <text class="legend-tip">{{ networkMode ? '拼接：多家族并排' : '左右滑动 · 点击查看详情' }}</text>
     </view>
 
     <scroll-view scroll-x class="tree-scroll" v-if="layout">
@@ -17,6 +21,7 @@
           v-for="(line, i) in layout.lines"
           :key="'l' + i"
           class="line"
+          :class="{ 'marriage-line': line.marriage }"
           :style="lineStyle(line)"
         />
         <view
@@ -34,167 +39,44 @@
       </view>
     </scroll-view>
 
-    <view v-else class="empty"><text>暂无族谱数据</text></view>
+    <view v-else class="empty"><text>{{ networkMode ? '暂无关联家族' : '暂无族谱数据' }}</text></view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useFamilyStore, type TreeNode } from '@/store/family'
-import type { Gender, Member } from '@/types'
+import { ref, computed } from 'vue'
+import { useFamilyStore } from '@/store/family'
+import { useNetworkStore } from '@/store/network'
+import { doLayout, NODE_W, NODE_H, lineStyle, type PlacedLine } from '@/utils/treeLayout'
 
-const { family, memberCount, generationCount, buildTree } = useFamilyStore()
+const { family, memberCount, generationCount, buildTree, currentFamilyId } = useFamilyStore()
+const { loadNetwork, buildNetworkLayout } = useNetworkStore()
 
-const NODE_W = 140
-const NODE_H = 112
-const SPOUSE_GAP = 24
-const SIBLING_GAP = 28
-const ROW_H = 220
+const networkMode = ref(false)
+const networkReady = ref(false)
 
-interface PlacedNode {
-  id: string
-  name: string
-  gender: Gender
-  generation: number
-  x: number
-  y: number
-  dates: string
-}
-interface PlacedLine {
-  x1: number
-  y1: number
-  x2: number
-  y2: number
-}
-
-function datesOf(m: Member): string {
-  if (m.birthDate && m.deathDate) return `${m.birthDate}–${m.deathDate}`
-  return m.birthDate || m.deathDate || ''
-}
-
-function subtreeWidth(node: TreeNode): number {
-  const selfWidth =
-    node.spouses.length > 0
-      ? NODE_W * (1 + node.spouses.length) + SPOUSE_GAP * node.spouses.length
-      : NODE_W
-  if (node.children.length === 0) return selfWidth
-  const childrenWidth = node.children.reduce(
-    (sum, c, i) => sum + subtreeWidth(c) + (i > 0 ? SIBLING_GAP : 0),
-    0,
-  )
-  return Math.max(selfWidth, childrenWidth)
-}
-
-function doLayout(tree: TreeNode): {
-  nodes: PlacedNode[]
-  lines: PlacedLine[]
-  width: number
-  height: number
-} {
-  const nodes: PlacedNode[] = []
-  const lines: PlacedLine[] = []
-
-  function place(node: TreeNode, x: number, y: number) {
-    const selfWidth =
-      node.spouses.length > 0
-        ? NODE_W * (1 + node.spouses.length) + SPOUSE_GAP * node.spouses.length
-        : NODE_W
-    const width = subtreeWidth(node)
-    const nodeStartX = x + (width - selfWidth) / 2
-
-    nodes.push({
-      id: node.member.id,
-      name: node.member.name,
-      gender: node.member.gender,
-      generation: node.member.generation,
-      x: nodeStartX,
-      y,
-      dates: datesOf(node.member),
-    })
-
-    let spouseX = nodeStartX + NODE_W + SPOUSE_GAP
-    for (const s of node.spouses) {
-      nodes.push({
-        id: s.id,
-        name: s.name,
-        gender: s.gender,
-        generation: s.generation,
-        x: spouseX,
-        y,
-        dates: datesOf(s),
-      })
-      lines.push({
-        x1: nodeStartX + NODE_W,
-        y1: y + NODE_H / 2,
-        x2: spouseX,
-        y2: y + NODE_H / 2,
-      })
-      spouseX += NODE_W + SPOUSE_GAP
-    }
-
-    if (node.children.length > 0) {
-      const childrenTotalWidth = node.children.reduce(
-        (sum, c, i) => sum + subtreeWidth(c) + (i > 0 ? SIBLING_GAP : 0),
-        0,
-      )
-      let childX = x + (width - childrenTotalWidth) / 2
-      const childY = y + ROW_H
-      const parentCenterX = nodeStartX + selfWidth / 2
-      const parentBottomY = y + NODE_H
-      const midY = y + NODE_H + (ROW_H - NODE_H) / 2
-
-      lines.push({ x1: parentCenterX, y1: parentBottomY, x2: parentCenterX, y2: midY })
-
-      const childCenters: number[] = []
-      for (const child of node.children) {
-        const cw = subtreeWidth(child)
-        childCenters.push(childX + cw / 2)
-        place(child, childX, childY)
-        childX += cw + SIBLING_GAP
-      }
-      if (childCenters.length > 1) {
-        lines.push({
-          x1: childCenters[0],
-          y1: midY,
-          x2: childCenters[childCenters.length - 1],
-          y2: midY,
-        })
-      }
-      for (const cx of childCenters) {
-        lines.push({ x1: cx, y1: midY, x2: cx, y2: childY })
-      }
+async function toggleNetwork() {
+  networkMode.value = !networkMode.value
+  if (networkMode.value) {
+    try {
+      await loadNetwork(currentFamilyId.value)
+      networkReady.value = true
+      uni.showToast({ title: '已拼接关联家族', icon: 'none' })
+    } catch (e) {
+      uni.showToast({ title: '拼接加载失败', icon: 'none' })
+      networkMode.value = false
     }
   }
-
-  place(tree, 0, 0)
-
-  const maxX = Math.max(...nodes.map((n) => n.x + NODE_W))
-  const maxY = Math.max(...nodes.map((n) => n.y + NODE_H))
-  return { nodes, lines, width: maxX + 40, height: maxY + 40 }
 }
 
 const layout = computed(() => {
+  if (networkMode.value) {
+    if (!networkReady.value) return null
+    return buildNetworkLayout(currentFamilyId.value)
+  }
   const tree = buildTree()
-  if (!tree) return null
-  return doLayout(tree)
+  return tree ? doLayout(tree) : null
 })
-
-function lineStyle(line: PlacedLine) {
-  if (line.y1 === line.y2) {
-    return {
-      left: Math.min(line.x1, line.x2) + 'rpx',
-      top: line.y1 + 'rpx',
-      width: Math.abs(line.x2 - line.x1) + 'rpx',
-      height: '2rpx',
-    }
-  }
-  return {
-    left: line.x1 + 'rpx',
-    top: Math.min(line.y1, line.y2) + 'rpx',
-    width: '2rpx',
-    height: Math.abs(line.y2 - line.y1) + 'rpx',
-  }
-}
 
 function goDetail(id: string) {
   uni.navigateTo({ url: `/pages/member/detail?id=${id}` })
@@ -212,7 +94,7 @@ function chineseNum(n: number): string {
 }
 .header {
   text-align: center;
-  margin-bottom: 20rpx;
+  margin-bottom: 12rpx;
   padding: 0 32rpx;
 }
 .title {
@@ -226,6 +108,17 @@ function chineseNum(n: number): string {
   font-size: 24rpx;
   color: #86868b;
   margin-top: 6rpx;
+}
+.network-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+  margin-top: 8rpx;
+}
+.toggle-label {
+  font-size: 24rpx;
+  color: #86868b;
 }
 .legend {
   display: flex;
@@ -267,6 +160,10 @@ function chineseNum(n: number): string {
 .line {
   position: absolute;
   background: #c7c7cc;
+}
+.line.marriage-line {
+  background: #34c759;
+  height: 3rpx;
 }
 .node {
   position: absolute;

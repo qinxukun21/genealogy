@@ -6,9 +6,11 @@ import {
   login,
   initDb,
   getFamilyData,
+  createFamily as cloudCreateFamily,
   saveMember,
   deleteMember as cloudDeleteMember,
 } from '@/api/cloud'
+import type { CloudFamily } from '@/api/cloud'
 
 export interface TreeNode {
   member: Member
@@ -19,16 +21,21 @@ export interface TreeNode {
 const state = reactive({
   family: getFamily() as Family,
   members: getAllMembers() as Member[],
+  /** 用户所属的所有家族（含角色） */
+  families: [getFamily()] as CloudFamily[],
 })
 
 /** 是否已从云端加载（H5 恒为 false，走 mock） */
 const loaded = ref(false)
+/** 当前家族 ID */
+const currentFamilyId = ref((getFamily() as Family).id)
 /** 当前用户在家族内的角色 */
 const currentRole = ref<'owner' | 'admin' | 'member' | null>(null)
 
 export function useFamilyStore() {
   const family = computed(() => state.family)
   const members = computed(() => state.members)
+  const families = computed(() => state.families)
   const memberCount = computed(() => state.members.length)
   const generationCount = computed(() =>
     state.members.reduce((max: number, m) => Math.max(max, m.generation), 0),
@@ -92,16 +99,57 @@ export function useFamilyStore() {
       await initDb()
       await login()
       const data = await getFamilyData()
-      if (data.currentFamilyId && data.families.length > 0) {
-        state.family = data.families[0]
-        state.members = data.members
-        currentRole.value = data.currentRole
-      }
+      applyFamilyData(data)
       loaded.value = true
     } catch (e) {
       // 云端不可用（未部署云函数等）时保留内存 mock，不影响浏览
       console.error('[cloud] loadRemote failed, fallback to mock:', e)
     }
+  }
+
+  /** 用 getFamilyData 结果填充当前家族 + 家族列表 */
+  function applyFamilyData(data: {
+    families: CloudFamily[]
+    currentFamilyId: string
+    currentRole: 'owner' | 'admin' | 'member' | null
+    members: Member[]
+  }) {
+    if (!data.currentFamilyId || data.families.length === 0) return
+    state.family = data.families.find((f) => f.id === data.currentFamilyId) || data.families[0]
+    state.families = data.families
+    currentFamilyId.value = state.family.id
+    currentRole.value = data.currentRole
+    state.members = data.members
+  }
+
+  /** 切换当前家族（小程序端从云端拉取该家族成员） */
+  async function switchFamily(id: string): Promise<void> {
+    if (id === currentFamilyId.value) return
+    // 先本地把家族列表与当前家族名切过去，让 UI 即时响应
+    const f = state.families.find((x) => x.id === id)
+    if (f) {
+      state.family = f
+      currentFamilyId.value = id
+      currentRole.value = f.role || null
+    }
+    if (isCloudAvailable()) {
+      try {
+        const data = await getFamilyData(id)
+        applyFamilyData(data)
+      } catch (e) {
+        console.error('[cloud] switchFamily', e)
+      }
+    }
+  }
+
+  /** 创建新家族并切换到它（小程序端） */
+  async function createFamily(name: string, surname: string): Promise<string> {
+    if (!isCloudAvailable()) {
+      throw new Error('H5 端暂不支持创建家族')
+    }
+    const res = await cloudCreateFamily(name, surname)
+    await switchFamily(res.id)
+    return res.id
   }
 
   /** 新增成员（维护配偶双向关系；小程序同步云端） */
@@ -166,10 +214,12 @@ export function useFamilyStore() {
   return {
     family,
     members,
+    families,
     memberCount,
     generationCount,
     originator,
     loaded,
+    currentFamilyId,
     currentRole,
     getMemberById,
     getChildrenOf,
@@ -180,5 +230,7 @@ export function useFamilyStore() {
     updateMember,
     deleteMember,
     loadRemote,
+    switchFamily,
+    createFamily,
   }
 }

@@ -8,7 +8,7 @@ const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 
-const COLLECTIONS = ['users', 'families', 'members', 'family_users', 'invites']
+const COLLECTIONS = ['users', 'families', 'members', 'family_users', 'invites', 'family_links']
 
 const FAMILY_ID = 'f1'
 const ORIGINATOR_ID = 'm1'

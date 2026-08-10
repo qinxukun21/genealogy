@@ -2,6 +2,13 @@
   <view class="page">
     <!-- 家族概览 -->
     <view class="card overview">
+      <!-- 家族选择器 -->
+      <picker v-if="families.length > 1" :range="families" range-key="name" @change="onFamilyChange">
+        <view class="family-switch">
+          <text class="family-switch-name">{{ family.name }}</text>
+          <text class="family-switch-caret">▾</text>
+        </view>
+      </picker>
       <view class="overview-top">
         <view class="overview-title">
           <text class="family-name">{{ family.name }}族谱</text>
@@ -82,13 +89,19 @@
 import { computed } from 'vue'
 import { useFamilyStore } from '@/store/family'
 
-const { family, memberCount, generationCount, originator } = useFamilyStore()
+const { family, families, memberCount, generationCount, originator, switchFamily } =
+  useFamilyStore()
 
 const originatorDates = computed(() => {
   const o = originator.value
   if (!o || !o.birthDate) return ''
   return o.deathDate ? `${o.birthDate}–${o.deathDate}` : o.birthDate
 })
+
+function onFamilyChange(e: { detail: { value: number } }) {
+  const f = families.value[e.detail.value]
+  if (f) switchFamily(f.id)
+}
 
 function go(url: string) {
   uni.navigateTo({ url })
@@ -108,6 +121,21 @@ function go(url: string) {
 .overview {
   padding: 32rpx;
   margin-bottom: 36rpx;
+}
+.family-switch {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 18rpx;
+}
+.family-switch-name {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #007aff;
+}
+.family-switch-caret {
+  font-size: 22rpx;
+  color: #007aff;
 }
 .overview-top {
   margin-bottom: 24rpx;

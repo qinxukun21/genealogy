@@ -1,0 +1,9 @@
+{
+  "name": "getNetwork",
+  "version": "1.0.0",
+  "description": "获取当前家族 + 通过婚姻关系直接关联的家族(含成员) + 婚姻关系",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

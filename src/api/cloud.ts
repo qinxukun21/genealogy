@@ -64,6 +64,26 @@ export interface FamilyData {
   members: Member[]
 }
 
+export interface FamilyLink {
+  id: string
+  familyAId: string
+  memberAId: string
+  familyBId: string
+  memberBId: string
+}
+
+export interface NetworkNode {
+  familyId: string
+  family: CloudFamily
+  role: 'owner' | 'admin' | 'member'
+  members: Member[]
+}
+
+export interface NetworkData {
+  nodes: NetworkNode[]
+  links: FamilyLink[]
+}
+
 /** 小程序登录（openid → users 表） */
 export function login(): Promise<CloudUser> {
   return callFunction<CloudUser>('login')
@@ -81,9 +101,50 @@ export function initDb(): Promise<InitDbData> {
   return callFunction<InitDbData>('initDb')
 }
 
-/** 获取当前用户所有家族 + 当前家族成员 */
-export function getFamilyData(): Promise<FamilyData> {
-  return callFunction<FamilyData>('getFamilyData')
+/** 获取当前用户所有家族 + 当前家族成员（可指定家族） */
+export function getFamilyData(familyId?: string): Promise<FamilyData> {
+  return callFunction<FamilyData>('getFamilyData', familyId ? { familyId } : {})
+}
+
+export interface CreateFamilyData {
+  id: string
+  name: string
+  surname: string
+}
+
+/** 创建新家族（当前用户成为 owner） */
+export function createFamily(name: string, surname: string): Promise<CreateFamilyData> {
+  return callFunction<CreateFamilyData>('createFamily', { name, surname })
+}
+
+/** 获取拼接视图数据：当前家族 + 关联家族(含成员) + 婚姻关系 */
+export function getNetwork(familyId: string): Promise<NetworkData> {
+  return callFunction<NetworkData>('getNetwork', { familyId })
+}
+
+/** 获取指定家族的成员列表（需有权访问） */
+export function getFamilyMembers(familyId: string): Promise<Member[]> {
+  return callFunction<Member[]>('getFamilyMembers', { familyId })
+}
+
+/** 建立跨家族婚姻关系 */
+export function saveFamilyLink(
+  familyAId: string,
+  memberAId: string,
+  familyBId: string,
+  memberBId: string,
+): Promise<{ id: string }> {
+  return callFunction<{ id: string }>('saveFamilyLink', {
+    familyAId,
+    memberAId,
+    familyBId,
+    memberBId,
+  })
+}
+
+/** 删除跨家族婚姻关系 */
+export function removeFamilyLink(id: string): Promise<void> {
+  return callFunction<void>('removeFamilyLink', { id })
 }
 
 export interface SaveMemberData {

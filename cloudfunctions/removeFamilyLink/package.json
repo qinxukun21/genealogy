@@ -1,0 +1,9 @@
+{
+  "name": "removeFamilyLink",
+  "version": "1.0.0",
+  "description": "删除跨家族婚姻关系（需任一家族 owner/admin）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

@@ -80,6 +80,22 @@
           <view class="row-picker">{{ spouseName || '选填' }}</view>
         </picker>
       </view>
+      <template v-if="otherFamilies.length > 0">
+        <view class="row-separator" />
+        <view class="row">
+          <text class="row-label">跨家族配偶</text>
+          <picker :range="otherFamilies" range-key="name" @change="onCrossFamilyChange">
+            <view class="row-picker">{{ crossFamilyName || '选填' }}</view>
+          </picker>
+        </view>
+        <view v-if="crossFamilyId" class="row-separator" />
+        <view v-if="crossFamilyId" class="row">
+          <text class="row-label">配偶成员</text>
+          <picker :range="crossFamilyMembers" range-key="name" @change="onCrossMemberChange">
+            <view class="row-picker">{{ crossSpouseName || '选择另一家族成员' }}</view>
+          </picker>
+        </view>
+      </template>
     </view>
 
     <view class="section-header">简介传记</view>
@@ -108,9 +124,11 @@
 import { reactive, computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useFamilyStore } from '@/store/family'
+import { getFamilyMembers, saveFamilyLink } from '@/api/cloud'
 import type { Gender, Member } from '@/types'
 
-const { members, getMemberById, addMember, updateMember } = useFamilyStore()
+const { members, families, getMemberById, addMember, updateMember, currentFamilyId } =
+  useFamilyStore()
 
 const editId = ref('') // 空 = 新增
 const isEdit = computed(() => !!editId.value)
@@ -195,6 +213,41 @@ function onSpouseChange(e: { detail: { value: number } }) {
   form.spouseId = spouseOptions.value[e.detail.value]?.id || ''
 }
 
+// ---- 跨家族配偶（拼接用） ----
+const crossFamilyId = ref('')
+const crossSpouseId = ref('')
+const crossSpouseName = ref('')
+const crossFamilyMembers = ref<Member[]>([])
+
+const otherFamilies = computed(() =>
+  families.value.filter((f) => f.id !== currentFamilyId.value),
+)
+const crossFamilyName = computed(
+  () => otherFamilies.value.find((f) => f.id === crossFamilyId.value)?.name || '',
+)
+
+async function onCrossFamilyChange(e: { detail: { value: number } }) {
+  const f = otherFamilies.value[e.detail.value]
+  if (!f) return
+  crossFamilyId.value = f.id
+  crossSpouseId.value = ''
+  crossSpouseName.value = ''
+  crossFamilyMembers.value = []
+  try {
+    crossFamilyMembers.value = await getFamilyMembers(f.id)
+  } catch (err) {
+    uni.showToast({ title: '加载成员失败', icon: 'none' })
+  }
+}
+
+function onCrossMemberChange(e: { detail: { value: number } }) {
+  const m = crossFamilyMembers.value[e.detail.value]
+  if (m) {
+    crossSpouseId.value = m.id
+    crossSpouseName.value = m.name
+  }
+}
+
 function onSave() {
   if (!form.name) {
     uni.showToast({ title: '请输入姓名', icon: 'none' })
@@ -226,6 +279,12 @@ function onSave() {
     updateMember(member)
   } else {
     addMember(member)
+  }
+  // 建立跨家族婚姻关系（拼接）
+  if (crossSpouseId.value && crossFamilyId.value) {
+    saveFamilyLink(currentFamilyId.value, member.id, crossFamilyId.value, crossSpouseId.value).catch(
+      (e) => console.error('[cloud] saveFamilyLink', e),
+    )
   }
   uni.showToast({ title: isEdit.value ? '已更新' : '已保存', icon: 'success' })
   setTimeout(() => uni.navigateBack(), 1000)

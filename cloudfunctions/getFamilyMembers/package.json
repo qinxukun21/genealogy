@@ -1,0 +1,9 @@
+{
+  "name": "getFamilyMembers",
+  "version": "1.0.0",
+  "description": "获取指定家族的成员列表（需用户有权访问该家族）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
