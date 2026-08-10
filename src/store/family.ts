@@ -82,18 +82,16 @@ export function useFamilyStore() {
 
   /**
    * 从云端加载数据（仅小程序端有效）。
-   * 流程：登录 → 若无家族则初始化种子 → 拉取家族数据。
+   * 流程：initDb 建集合+种子（幂等）→ 登录 → 拉取家族数据。
+   * 必须先跑 initDb，否则 login/getFamilyData 查库时集合尚不存在会报错。
    * H5 端无云，直接保留 mock。
    */
   async function loadRemote(): Promise<void> {
     if (!isCloudAvailable()) return
     try {
+      await initDb()
       await login()
-      let data = await getFamilyData()
-      if (!data.currentFamilyId) {
-        await initDb()
-        data = await getFamilyData()
-      }
+      const data = await getFamilyData()
       if (data.currentFamilyId && data.families.length > 0) {
         state.family = data.families[0]
         state.members = data.members
